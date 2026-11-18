@@ -247,6 +247,19 @@ p{margin:0}
 .decide h3{font-size:24px;margin-bottom:10px}
 .decide ul{margin:0;padding-left:20px;font-size:18px}
 
+
+.tabs{display:flex;gap:2px;background:var(--paper-2);border-radius:999px;padding:3px}
+.tabs a{padding:6px 14px;border-radius:999px;text-decoration:none;color:var(--ink-2);font:600 14px/1 var(--display)}
+.tabs a[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(23,32,51,.15)}
+body.research-mode #chapnav{display:none}
+.research{padding:76px 24px 48px}
+.research-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:20px}
+.research-head h2{font-size:clamp(32px,4.5vw,52px);font-variation-settings:"wdth" 85;margin-bottom:10px}
+.research-head p{font-size:18px;max-width:60ch}
+.research-actions{display:flex;gap:10px;flex-wrap:wrap}
+.pdf{display:block;width:100%;height:calc(100vh - 220px);min-height:520px;border:1px solid var(--rule);border-radius:14px;background:var(--card)}
+.pdf-note{font:400 14px/1.4 var(--display);margin-top:10px}
+@media (max-width:760px){.topbar>b{display:none}}
 footer{margin-top:120px;padding:48px 0 80px;border-top:2px solid var(--ink);font:400 15px/1.55 var(--display);color:var(--ink-2)}
 footer h3{font-size:20px;color:var(--ink);margin-bottom:12px}
 footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:28px}
@@ -257,6 +270,10 @@ footer ul{margin:0;padding-left:18px}
 
 <div class="topbar" role="navigation" aria-label="Chapters">
   <b>Where's my money?</b>
+  <div class="tabs" role="tablist" aria-label="Views">
+    <a href="#story" role="tab" id="tab-story" aria-controls="view-story">Story</a>
+    <a href="#research" role="tab" id="tab-research" aria-controls="view-research">Research</a>
+  </div>
   <nav id="chapnav">
     <a href="#problem">Problem</a>
     <a href="#insight">Insight</a>
@@ -270,6 +287,7 @@ footer ul{margin:0;padding-left:18px}
   <div class="bar" id="bar"></div>
 </div>
 
+<div id="view-story" role="tabpanel" aria-labelledby="tab-story">
 <header class="hero wrap">
   <p class="kick">A strategy for payment status, for leadership</p>
   <h1>Where's my<br>money?</h1>
@@ -483,7 +501,7 @@ footer ul{margin:0;padding-left:18px}
     <div><h3>The full system</h3><ul>
       <li><a href="https://claude.ai/artifact/HCoBehdopTfE8PdNKpyyoQ" target="_blank" rel="noopener">Content design system spec</a></li>
       <li><a href="https://claude.ai/artifact/67LhimW33VK9E19oxMrftk" target="_blank" rel="noopener">Design system: tokens and components</a></li>
-      <li><a href="https://claude.ai/artifact/RGj6jHcsRsM197wmReBa4w" target="_blank" rel="noopener">Research benchmark</a></li>
+      <li><a href="#research">Research benchmark (PDF, on this site)</a></li>
       <li><a href="https://claude.ai/artifact/Rfvu9u9oSeECs8aTedmpLw" target="_blank" rel="noopener">Architecture whiteboard</a></li>
     </ul></div>
     <div><h3>Key sources</h3><ul>
@@ -495,6 +513,24 @@ footer ul{margin:0;padding-left:18px}
     <div><h3>About this story</h3><p>Built 18 Nov 2026 from the payment status research and system. Customer names, merchants and amounts are illustrative. Market labels and timings are from public sources checked in full.</p></div>
   </div>
 </footer>
+</div>
+
+<section id="view-research" role="tabpanel" aria-labelledby="tab-research" hidden>
+  <div class="wrap research">
+    <div class="research-head">
+      <div>
+        <h2>Payment Status Benchmark</h2>
+        <p class="muted">The research behind the story: how 24 banks, fintechs, payment rails and standards structure and word payment status. 14 pages, 18 Nov 2026.</p>
+      </div>
+      <div class="research-actions">
+        <a class="btn solid" href="research/payment-status-benchmark.pdf" download>Download PDF</a>
+        <a class="btn" href="research/payment-status-benchmark.pdf" target="_blank" rel="noopener">Open in a new tab</a>
+      </div>
+    </div>
+    <iframe class="pdf" src="research/payment-status-benchmark.pdf#view=FitH" title="Payment Status Benchmark: Banks, Fintech, and Infra (PDF)"></iframe>
+    <p class="muted pdf-note">If the document doesn't show here, your browser may not display PDFs inside a page. Use Open in a new tab.</p>
+  </div>
+</section>
 
 <script>
 (function(){
@@ -782,6 +818,20 @@ function onScroll(){
   links.forEach((a,i)=>a.classList.toggle('on',i===on));
 }
 document.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+/* ---------- tabs: #research shows the PDF, anything else shows the story ---------- */
+const vStory=document.getElementById('view-story'), vRes=document.getElementById('view-research');
+const tS=document.getElementById('tab-story'), tR=document.getElementById('tab-research');
+function route(){
+  const res = location.hash==='#research';
+  vStory.hidden=res; vRes.hidden=!res;
+  tS.setAttribute('aria-selected',!res); tR.setAttribute('aria-selected',res);
+  document.body.classList.toggle('research-mode',res);
+  if(res){ window.scrollTo(0,0); bar.style.width='0'; }
+  else { setTimeout(()=>{layoutStorm(); onScroll();},50); }
+}
+tS.addEventListener('click',e=>{ if(location.hash==='#story'||!location.hash){ e.preventDefault(); location.hash='story'; } });
+window.addEventListener('hashchange',route); route();
+
 })();
 </script>
 </body>
