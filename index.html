@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where's my money?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: Pudding-style scrollytelling. A sticky graphic holds the stage while short step cards scroll past it; three interactive chapters sit between. One visual world (cool paper, navy ink), with the seven status colours as the only accents. */
+:root{
+  --paper:#eef0ec;
+  --paper-2:#e2e6e0;
+  --card:#ffffff;
+  --ink:#172033;
+  --ink-2:#4e5869;
+  --rule:#c9cfc7;
+  --s-neutral:#5f6b7a; --s-neutral-bg:#e6e9ed;
+  --s-info:#1f5fd1;    --s-info-bg:#e3ecfd;
+  --s-ok:#18834a;      --s-ok-bg:#e1f3e7;
+  --s-warn:#a96100;    --s-warn-bg:#fdf0d3;
+  --s-bad:#c0282d;     --s-bad-bg:#fbe5e5;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body:"Newsreader", "Iowan Old Style", Georgia, serif;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{transition:none !important;animation:none !important}}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 20px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+a{color:var(--s-info)}
+:focus-visible{outline:3px solid var(--s-info);outline-offset:3px;border-radius:4px}
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.015em;line-height:1.05;text-wrap:balance;margin:0}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.prose{max-width:62ch}
+.prose p + p{margin-top:.9em}
+.muted{color:var(--ink-2)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* progress + chapter nav */
+.topbar{position:fixed;inset:0 0 auto 0;z-index:50;height:44px;display:flex;align-items:center;gap:16px;padding:0 20px;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule);font:500 14px/1 var(--display)}
+.topbar .bar{position:absolute;left:0;bottom:-1px;height:3px;width:0;background:var(--ink)}
+.topbar b{font-weight:700}
+.topbar nav{margin-left:auto;display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto}
+.topbar nav a{color:var(--ink-2);text-decoration:none;padding:6px 10px;border-radius:999px;white-space:nowrap}
+.topbar nav a.on{background:var(--ink);color:var(--paper)}
+@media (max-width:760px){.topbar nav a:not(.on){display:none}}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px 4px 10px;border-radius:999px;border:1.5px solid currentColor;font:650 15px/1.2 var(--display);white-space:nowrap}
+.chip i{width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.c-neutral{color:var(--s-neutral);background:var(--s-neutral-bg)}
+.c-info{color:var(--s-info);background:var(--s-info-bg)}
+.c-ok{color:var(--s-ok);background:var(--s-ok-bg)}
+.c-warn{color:var(--s-warn);background:var(--s-warn-bg)}
+.c-bad{color:var(--s-bad);background:var(--s-bad-bg)}
+.c-grey{color:#6b6f76;background:#e9e9e7}
+
+/* hero */
+.hero{padding:120px 0 72px}
+.hero .kick{font:600 17px/1.3 var(--display);color:var(--ink-2);margin-bottom:20px}
+.hero h1{font-size:clamp(64px,11vw,148px);font-variation-settings:"wdth" 82;font-weight:800;letter-spacing:-.035em;line-height:.9}
+.answer{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:36px 0 28px;font:500 clamp(22px,2.6vw,30px)/1.2 var(--display)}
+.flip{display:inline-flex;min-width:11ch}
+.flip .chip{font-size:clamp(22px,2.6vw,30px);padding:6px 20px 6px 16px;transition:opacity .25s, transform .25s}
+.flip .chip i{width:13px;height:13px}
+.flip .chip.out{opacity:0;transform:translateY(-8px)}
+.hero .prose{font-size:22px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:999px;font:600 16px/1 var(--display);text-decoration:none;border:2px solid var(--ink);cursor:pointer;background:transparent;color:var(--ink)}
+.btn.solid{background:var(--ink);color:var(--paper)}
+.btn:hover{transform:translateY(-1px)}
+
+/* chapter openers */
+.chapter{padding:110px 0 30px}
+.chapter .num{font:700 15px/1 var(--display);color:var(--ink-2);margin-bottom:14px;font-variant-numeric:tabular-nums}
+.chapter h2{font-size:clamp(40px,6vw,76px);font-variation-settings:"wdth" 85;max-width:16ch}
+.chapter .prose{margin-top:22px;font-size:21px}
+
+/* scrolly */
+.scrolly{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:48px;position:relative}
+.scrolly .steps{padding:12vh 0 30vh;position:relative;z-index:2}
+.step{min-height:78vh;display:flex;align-items:center}
+.step .card{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:22px 24px;box-shadow:0 1px 0 var(--rule);opacity:.45;transition:opacity .3s}
+.step.active .card{opacity:1}
+.step .card p + p{margin-top:.7em}
+.step .card .src{font:400 14px/1.4 var(--display);color:var(--ink-2);margin-top:12px}
+.sticky{position:sticky;top:64px;height:calc(100vh - 84px);display:flex;align-items:center;justify-content:center}
+.stage{width:100%;height:100%;position:relative}
+@media (max-width:900px){
+  .scrolly{display:flex;flex-direction:column;gap:0}
+  .sticky{order:-1;height:62vh;top:54px;z-index:1}
+  .scrolly .steps{margin-top:-30vh;padding-top:30vh}
+  .step{min-height:70vh;align-items:flex-end;padding-bottom:6vh}
+  .step .card{opacity:.96;box-shadow:0 6px 24px rgba(23,32,51,.12)}
+  .storm .w .chip{font-size:12px;padding:2px 8px 2px 7px}
+  .storm .head .chip{font-size:11px !important}
+}
+
+/* chapter 1: phone activity */
+.phone{width:min(400px,92%);margin:auto;background:var(--card);border:1px solid var(--rule);border-radius:34px;padding:22px 18px 18px;box-shadow:0 30px 60px -30px rgba(23,32,51,.35)}
+.phone h4{font:700 20px/1 var(--display);margin:4px 6px 14px}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:12px 8px;border-top:1px solid var(--paper-2);transition:background .3s, opacity .3s}
+.row .who{font:600 16px/1.2 var(--display)}
+.row .amt{font:500 15px/1 var(--display);font-variant-numeric:tabular-nums;text-align:right}
+.row .meta{font:400 13px/1.3 var(--display);color:var(--ink-2)}
+.row .chip{font-size:12.5px;padding:2px 9px 2px 8px;justify-self:end}
+.row .chip i{width:7px;height:7px}
+.row .note{grid-column:1/-1;font:500 13.5px/1.35 var(--display);color:var(--ink);background:var(--paper);border-radius:8px;padding:0 10px;max-height:0;overflow:hidden;transition:max-height .35s, padding .35s, margin .35s}
+.phone.dim .row{opacity:.28}
+.phone .row.hl{opacity:1;background:#fbfbf8}
+.phone .row.hl .note{max-height:90px;padding:8px 10px;margin-top:8px}
+.bubble{position:absolute;right:4%;bottom:10%;max-width:260px;background:var(--ink);color:var(--paper);border-radius:22px 22px 6px 22px;padding:14px 18px;font:600 19px/1.25 var(--display);opacity:0;transform:translateY(12px);transition:.4s}
+.bubble small{display:block;font:400 13px/1.3 var(--display);opacity:.75;margin-top:6px}
+.stage.ask .bubble{opacity:1;transform:none}
+
+/* chapter 2: mapping + word storm */
+.map-svg{width:100%;height:100%}
+.map-svg text{font-family:var(--display)}
+.storm{position:absolute;inset:0}
+.storm .w{position:absolute;left:0;top:0;transition:transform .9s cubic-bezier(.6,.05,.2,1), opacity .5s;will-change:transform}
+.storm .w .chip{font-size:14px;padding:3px 10px 3px 8px}
+.storm .head{position:absolute;left:0;top:0;font:700 13px/1.15 var(--display);text-align:center;transition:opacity .5s;opacity:0}
+.storm.cols .head{opacity:1}
+
+.storm .empty{position:absolute;left:0;top:0;font:italic 400 14px/1.3 var(--body);color:var(--s-warn);text-align:center;opacity:0;transition:opacity .5s}
+.storm.cols .empty{opacity:1}
+
+/* chapter 3: player */
+.player{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:40px;align-items:start;margin-top:40px}
+@media (max-width:980px){.player{grid-template-columns:1fr}}
+.scen{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.scen button{font:600 15px/1 var(--display);padding:10px 16px;border-radius:999px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.scen button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.life{width:100%;height:auto;display:block;background:var(--card);border:1px solid var(--rule);border-radius:16px}
+.life .node rect{transition:fill-opacity .3s, stroke-width .3s}
+.life text{font-family:var(--display)}
+.ctrl{display:flex;align-items:center;gap:12px;margin-top:16px;flex-wrap:wrap}
+.ctrl .btn{padding:10px 16px}
+.ctrl .btn[disabled]{opacity:.35;cursor:default;transform:none}
+.stepdots{display:flex;gap:6px;margin-left:4px}
+.stepdots i{width:10px;height:10px;border-radius:50%;background:var(--rule)}
+.stepdots i.on{background:var(--ink)}
+.behind{margin-top:18px;background:var(--paper-2);border-radius:12px;padding:14px 16px;font:400 15px/1.45 var(--display)}
+.behind b{font-weight:650}
+.behind code{font:500 13.5px/1 ui-monospace,Menlo,monospace;background:var(--card);padding:2px 6px;border-radius:5px}
+.app{background:var(--card);border:1px solid var(--rule);border-radius:30px;padding:22px;box-shadow:0 30px 60px -30px rgba(23,32,51,.35)}
+.app .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;font:500 14px/1 var(--display);color:var(--ink-2)}
+.app h3{font-size:24px;line-height:1.15;margin:16px 0 8px;letter-spacing:-.01em}
+.app .body{font:400 16.5px/1.45 var(--display)}
+.app .next{font:500 15px/1.4 var(--display);color:var(--ink-2);margin-top:10px}
+.app .cta{margin-top:16px;display:inline-block;background:var(--ink);color:var(--paper);border-radius:10px;padding:11px 18px;font:600 15px/1 var(--display)}
+.trk{list-style:none;margin:6px 0 0;padding:0;display:flex}
+.trk li{flex:1;position:relative;padding-top:28px;font:500 13px/1.25 var(--display);color:var(--ink-2);padding-right:6px}
+.trk li::before{content:"";position:absolute;top:9px;left:0;right:0;height:3px;background:var(--paper-2)}
+.trk li:first-child::before{left:10px}.trk li:last-child::before{right:calc(100% - 10px)}
+.trk li.done::before{background:var(--s-ok)}
+.trk li .d{position:absolute;top:0;left:0;width:21px;height:21px;border-radius:50%;border:3px solid var(--rule);background:var(--card)}
+.trk li.done .d{background:var(--s-ok);border-color:var(--s-ok)}
+.trk li.now{color:var(--ink);font-weight:700}
+.trk li.now .d{border-width:7px;border-color:var(--s-info)}
+.trk li.now.action .d{border-color:var(--s-warn)}
+.trk li.now.stopped .d{border-color:var(--s-bad)}
+.trk li .eta{display:block;font-weight:400;color:var(--ink-2);margin-top:2px}
+
+/* chapter 4: surfaces */
+.surfaces{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:640px;margin:auto}
+.sf{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:14px 16px;font:400 15px/1.4 var(--display);transition:opacity .35s, transform .35s, box-shadow .35s}
+.sf .lbl{font:600 12.5px/1 var(--display);color:var(--ink-2);margin-bottom:10px;display:flex;justify-content:space-between}
+.sf.wide{grid-column:1/-1}
+.stage.focus .sf{opacity:.3}
+.stage.focus .sf.hl{opacity:1;transform:scale(1.02);box-shadow:0 18px 40px -20px rgba(23,32,51,.4)}
+.sf .bot{background:var(--paper);border-radius:14px 14px 14px 4px;padding:10px 12px;margin-top:6px}
+.sf .me{background:var(--ink);color:var(--paper);border-radius:14px 14px 4px 14px;padding:8px 12px;margin-left:auto;width:max-content;max-width:90%}
+.sf code{font:500 12.5px/1.5 ui-monospace,Menlo,monospace}
+.sf dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0}
+.sf dt{color:var(--ink-2)}
+.sf dd{margin:0}
+
+/* chapter 5: pressure test */
+.ptest{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:36px;margin-top:40px;align-items:start}
+@media (max-width:900px){.ptest{grid-template-columns:1fr}}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.legend button{font:600 14px/1 var(--display);padding:8px 12px;border-radius:999px;border:1.5px solid var(--rule);background:var(--card);color:var(--ink);cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.legend button i{width:10px;height:10px;border-radius:3px}
+.legend button[aria-pressed="true"]{border-color:var(--ink)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{text-align:left;background:var(--card);border:1.5px solid var(--rule);border-left-width:6px;border-radius:10px;padding:10px 12px;font:600 14.5px/1.25 var(--display);color:var(--ink);cursor:pointer;min-height:76px;transition:opacity .25s, border-color .25s}
+.tile small{display:block;font-weight:500;color:var(--ink-2);margin-top:6px;font-size:12.5px}
+.tile.off{opacity:.25}
+.tile[aria-pressed="true"]{border-color:var(--ink)}
+.detail{position:sticky;top:70px;background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:22px}
+.detail h3{font-size:24px;margin:10px 0 12px}
+.detail dl{margin:0;display:grid;gap:10px;font:400 16px/1.45 var(--display)}
+.detail dt{font-weight:650}
+.detail dd{margin:0}
+.bigstat{display:flex;gap:36px;flex-wrap:wrap;margin-top:34px}
+.bigstat div{font:400 17px/1.3 var(--display);color:var(--ink-2);max-width:18ch}
+.bigstat b{display:block;font:800 64px/1 var(--display);color:var(--ink);font-variation-settings:"wdth" 80;font-variant-numeric:tabular-nums}
+
+/* rail mapping */
+.rails{margin-top:56px;overflow-x:auto}
+.rails table{border-collapse:collapse;width:100%;min-width:640px;font:400 16px/1.35 var(--display)}
+.rails th{font-weight:600;color:var(--ink-2);text-align:left;padding:8px 10px;border-bottom:2px solid var(--ink)}
+.rails td{padding:10px;border-bottom:1px solid var(--rule);vertical-align:middle}
+.rails td code{font:500 14px/1 ui-monospace,Menlo,monospace;background:var(--card);padding:3px 7px;border-radius:5px;border:1px solid var(--rule)}
+.rails td.arrow{color:var(--ink-2);width:30px;text-align:center}
+
+/* strategy */
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;margin-top:44px;background:var(--rule);border:2px solid var(--ink);border-radius:18px;overflow:hidden}
+@media (max-width:760px){.choices{grid-template-columns:1fr}}
+.choice{background:var(--paper);padding:28px 28px 30px}
+.choice h3{font-size:30px;font-variation-settings:"wdth" 88;margin-bottom:12px}
+.choice p{font-size:18px;line-height:1.5}
+.choice .why{margin-top:14px;font:400 15px/1.45 var(--display);color:var(--ink-2)}
+
+/* plan */
+.plan{list-style:none;margin:48px 0 0;padding:0;display:grid;gap:0;counter-reset:ph}
+.phase{display:grid;grid-template-columns:120px minmax(0,1fr) minmax(0,1fr);gap:28px;padding:30px 0;border-top:2px solid var(--ink)}
+.phase:last-child{border-bottom:2px solid var(--ink)}
+@media (max-width:860px){.phase{grid-template-columns:1fr;gap:12px}}
+.phase .pn{font:800 72px/.85 var(--display);font-variation-settings:"wdth" 75;font-variant-numeric:tabular-nums}
+.phase .pn span{display:block;font:600 16px/1.2 var(--display);margin-top:10px;font-variation-settings:normal}
+.phase h3{font-size:28px;margin-bottom:10px}
+.phase ul{margin:0;padding-left:20px;font-size:18px;line-height:1.5}
+.phase .done{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:16px 18px;font:400 16px/1.45 var(--display)}
+.phase .done b{display:block;font-weight:650;margin-bottom:6px}
+.phase.pilot .pn{color:var(--s-info)}
+
+/* asks */
+.asks{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;margin-top:44px}
+@media (max-width:860px){.asks{grid-template-columns:1fr}}
+.asklist{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.asklist li{background:var(--ink);color:var(--paper);border-radius:14px;padding:18px 20px;font:500 18px/1.4 var(--display);display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
+.asklist li label{display:contents;cursor:pointer}
+.asklist input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--s-ok)}
+.asklist li.checked{background:var(--s-ok)}
+.asklist b{display:block;font-weight:700;font-size:20px;margin-bottom:4px}
+.measures{border:2px solid var(--ink);border-radius:16px;padding:22px}
+.measures h3{font-size:24px;margin-bottom:14px}
+.measures dl{margin:0;display:grid;gap:14px;font:400 16.5px/1.4 var(--display)}
+.measures dt{font-weight:650}
+.measures dd{margin:2px 0 0;color:var(--ink-2)}
+.decide{margin-top:28px}
+.decide h3{font-size:24px;margin-bottom:10px}
+.decide ul{margin:0;padding-left:20px;font-size:18px}
+
+footer{margin-top:120px;padding:48px 0 80px;border-top:2px solid var(--ink);font:400 15px/1.55 var(--display);color:var(--ink-2)}
+footer h3{font-size:20px;color:var(--ink);margin-bottom:12px}
+footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:28px}
+footer ul{margin:0;padding-left:18px}
+</style>
+</head>
+<body>
+
+<div class="topbar" role="navigation" aria-label="Chapters">
+  <b>Where's my money?</b>
+  <nav id="chapnav">
+    <a href="#problem">Problem</a>
+    <a href="#insight">Insight</a>
+    <a href="#play">The system</a>
+    <a href="#surfaces">Every surface</a>
+    <a href="#scale">Scale</a>
+    <a href="#strategy">Strategy</a>
+    <a href="#plan">Plan</a>
+    <a href="#asks">Asks</a>
+  </nav>
+  <div class="bar" id="bar"></div>
+</div>
+
+<header class="hero wrap">
+  <p class="kick">A strategy for payment status, for leadership</p>
+  <h1>Where's my<br>money?</h1>
+  <div class="answer" aria-live="off">
+    <span>Our industry answers with</span>
+    <span class="flip"><span class="chip c-grey" id="flip"><i></i><span>Pending</span></span></span>
+  </div>
+  <div class="prose">
+    <p>Every customer asks the same three questions about a payment. Where is it? When will it finish? Do I need to do anything? Today the answer changes with the product, the rail and the screen.</p>
+    <p>This is the case for one simple status system across every payment we offer, and the plan to build it.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="btn solid" href="#problem">Start the story</a>
+    <a class="btn" href="#strategy">Skip to the strategy</a>
+  </div>
+</header>
+
+<!-- 1 PROBLEM -->
+<section class="chapter wrap" id="problem">
+  <p class="num">Chapter 1</p>
+  <h2>One customer. One week. Five words that mean nothing.</h2>
+</section>
+<section class="scrolly wrap" data-scrolly="problem">
+  <div class="steps">
+    <div class="step"><div class="card"><p>Meet Asha. This week she paid her credit card bill, sent rent to her landlord, bought a coffee and got a refund.</p><p>Here is what her activity screen could look like, using words real banks and apps use today.</p><p class="src">Illustration. Every label on it comes from the benchmark of 24 banks, fintechs and rails.</p></div></div>
+    <div class="step"><div class="card"><p>Three rows say <b>Pending</b>. They mean three different things.</p><p>The coffee is a card hold: nothing to do. The rent is waiting for Ravi to accept: he must act. The refund is under review: the bank is checking it.</p><p class="src">Card hold: Monzo. Waiting on recipient: Zelle, Cash App. Review: Revolut, PayPal.</p></div></div>
+    <div class="step"><div class="card"><p>"Done" isn't one moment either.</p><p>Her card payment shows <b>Posted</b>. But a bank can post a payment and still hold the credit for days. Capital One says about 3 to 9.</p><p class="src">Wise marks a transfer Complete when money reaches the recipient's bank, not their account.</p></div></div>
+    <div class="step"><div class="card"><p>So Asha does what anyone would. She asks.</p><p>Every unclear status becomes a support contact, a repeat payment, or a customer who trusts us a little less.</p></div></div>
+  </div>
+  <div class="sticky"><div class="stage" id="st-problem">
+    <div class="phone" id="phone">
+      <h4>This week</h4>
+      <div class="row" data-k="card"><span class="who">Card bill payment</span><span class="amt">$250.00</span><span class="meta">From Checking ••4417</span><span class="chip c-grey"><i></i>Posted</span><span class="note">Posted, but the credit can be held for days. Is it paid or not?</span></div>
+      <div class="row" data-k="coffee"><span class="who">Corner Café</span><span class="amt">$4.20</span><span class="meta">Card ••9012</span><span class="chip c-grey"><i></i>Pending</span><span class="note">Card hold. The final amount may change. Nothing to do.</span></div>
+      <div class="row" data-k="rent"><span class="who">Rent to Ravi</span><span class="amt">$1,200.00</span><span class="meta">Sent by phone number</span><span class="chip c-grey"><i></i>Pending</span><span class="note">Waiting for Ravi to accept. If he doesn't, it expires.</span></div>
+      <div class="row" data-k="refund"><span class="who">Refund from Shoe Store</span><span class="amt">+$64.00</span><span class="meta">Incoming</span><span class="chip c-grey"><i></i>Pending</span><span class="note">Under review by the bank. Usually a few business days.</span></div>
+      <div class="row" data-k="power"><span class="who">City Power</span><span class="amt">$84.20</span><span class="meta">Bill pay</span><span class="chip c-grey"><i></i>Processing</span><span class="note"></span></div>
+    </div>
+    <div class="bubble">Where's my money?<small>Asha, to support</small></div>
+  </div></div>
+</section>
+
+<!-- 2 INSIGHT -->
+<section class="chapter wrap" id="insight">
+  <p class="num">Chapter 2</p>
+  <h2>The best players keep the machinery out of sight.</h2>
+  <div class="prose"><p>Payment systems are complicated on purpose. Customers don't need to see it. The leaders run two layers: many states inside, a few plain words outside.</p></div>
+</section>
+<section class="scrolly wrap" data-scrolly="insight">
+  <div class="steps">
+    <div class="step"><div class="card"><p>Stripe tracks a payment through seven states. Its dashboard shows only five labels.</p><p>Three different system states all read "Incomplete" to the person looking.</p><p class="src">Stripe, payment status docs.</p></div></div>
+    <div class="step"><div class="card"><p>Wise does the same for customers. Ten states inside its API. Eight plain labels outside, like "On its way to Wise".</p><p>Adyen runs about sixty. Nobody shows sixty.</p><p class="src">Wise transfer statuses. Adyen payment lifecycle.</p></div></div>
+    <div class="step"><div class="card"><p>Now look at the market as a whole. We found about thirty words for status across banks, fintechs and rails.</p><p>Each is someone's honest attempt. Together, they're noise.</p></div></div>
+    <div class="step"><div class="card"><p>Sort them by what they actually mean, and only seven situations are left.</p><p>One row is almost empty. No one has a good word for "you need to act." That's the moment where silence costs customers money.</p></div></div>
+    <div class="step"><div class="card"><p>Those seven become our system. One state each, one fixed label each, on every product and every screen.</p><p>The detail moves into the sentence under the label, where it can be specific.</p></div></div>
+  </div>
+  <div class="sticky"><div class="stage" id="st-insight">
+    <svg class="map-svg" id="mapsvg" viewBox="0 0 640 520" role="img" aria-label="Stripe maps seven internal payment states to five dashboard labels"></svg>
+    <div class="storm" id="storm" aria-hidden="true"></div>
+  </div></div>
+</section>
+
+<!-- 3 PLAY -->
+<section class="chapter wrap" id="play">
+  <p class="num">Chapter 3</p>
+  <h2>Seven states. Play a payment through them.</h2>
+  <div class="prose"><p>Think of a food delivery tracker. You never see the kitchen's ticket system. You see "Preparing", "On the way", "Delivered", and a time. Pick a payment below and step through it.</p></div>
+  <div class="player">
+    <div>
+      <div class="scen" role="group" aria-label="Choose a payment">
+        <button type="button" data-s="bill" aria-pressed="true">Card bill, then returned</button>
+        <button type="button" data-s="upi">UPI transfer runs late</button>
+        <button type="button" data-s="low">Scheduled bill, low balance</button>
+        <button type="button" data-s="tip">Card purchase with a tip</button>
+      </div>
+      <svg class="life" id="life" viewBox="0 0 760 360" role="img" aria-label="The seven payment states and the moves allowed between them"></svg>
+      <div class="ctrl">
+        <button class="btn" type="button" id="prev">Back</button>
+        <button class="btn solid" type="button" id="next">Next step</button>
+        <span class="stepdots" id="dots" aria-hidden="true"></span>
+      </div>
+      <div class="behind" id="behind" aria-live="polite"></div>
+    </div>
+    <div class="app" id="app" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- 4 SURFACES -->
+<section class="chapter wrap" id="surfaces">
+  <p class="num">Chapter 4</p>
+  <h2>One event. The same words on every screen.</h2>
+  <div class="prose"><p>Asha's UPI transfer is running late. Watch one status event travel to every place she might look.</p></div>
+</section>
+<section class="scrolly wrap" data-scrolly="surfaces">
+  <div class="steps">
+    <div class="step"><div class="card"><p>The rail reports one fact: the receiving bank hasn't confirmed yet. Our system turns it into a state, a cause and a deadline.</p><p>Everything she sees is written once, as a content record, and pulled from there.</p></div></div>
+    <div class="step"><div class="card"><p>In the app, the chip says <b>In progress</b>, in amber because it's late. The sentence says who has the money and when it ends.</p></div></div>
+    <div class="step"><div class="card"><p>The push and the SMS say the same thing, shorter. The SMS carries no link, so it can't be mistaken for phishing.</p></div></div>
+    <div class="step"><div class="card"><p>The AI agent reads the same record through one tool. It may rephrase. It may not promise a date we can't keep, or tell her to pay again.</p></div></div>
+    <div class="step"><div class="card"><p>Support sees what she sees, plus the raw rail code. No more "the app says one thing and the agent says another."</p></div></div>
+  </div>
+  <div class="sticky"><div class="stage" id="st-surfaces">
+    <div class="surfaces">
+      <div class="sf wide" data-sf="0"><div class="lbl"><span>Status event</span><span>from the UPI rail</span></div><dl><dt>State</dt><dd><b>IN_PROGRESS</b></dd><dt>Cause</dt><dd>waiting on other party (HDFC Bank)</dd><dt>Delayed</dt><dd>yes</dd><dt>No later than</dt><dd>Wed 19 Nov (RBI turnaround time)</dd></dl></div>
+      <div class="sf wide" data-sf="1"><div class="lbl"><span>App</span><span>detail screen</span></div><span class="chip c-warn"><i></i>In progress</span><p style="font:650 18px/1.3 var(--display);margin-top:10px">HDFC Bank has your payment</p><p>This is taking longer than usual. If it doesn't arrive by Wed 19 Nov, the money comes back to your account automatically.</p><p class="muted" style="margin-top:6px">Nothing to do. We'll tell you when it's done.</p></div>
+      <div class="sf" data-sf="2"><div class="lbl"><span>Push</span><span>now</span></div><b>HDFC Bank has your payment</b><br>Taking longer than usual. Back to you by 19 Nov if it doesn't arrive.</div>
+      <div class="sf" data-sf="2"><div class="lbl"><span>SMS</span><span>no link</span></div>Your ₹2,000 to Asha R is taking longer than usual. If it doesn't arrive by 19 Nov, it comes back to your account. Open the app for details.</div>
+      <div class="sf" data-sf="3"><div class="lbl"><span>AI agent</span><span>grounded</span></div><div class="me">Where's my ₹2,000?</div><div class="bot">HDFC Bank has it and hasn't confirmed yet. If it hasn't arrived by Wednesday 19 November, the money comes back to your account on its own. You don't need to pay again.</div></div>
+      <div class="sf" data-sf="4"><div class="lbl"><span>Support console</span><span>internal</span></div><dl><dt>Customer sees</dt><dd>In progress, delayed</dd><dt>Rail says</dt><dd><code>PENDING · BT</code></dd><dt>Escalate if</dt><dd>past 19 Nov</dd></dl></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 5 SCALE -->
+<section class="chapter wrap" id="scale">
+  <p class="num">Chapter 5</p>
+  <h2>We tried to break it. It held.</h2>
+  <div class="prose"><p>A system like this fails when a new product doesn't fit. So we ran 17 real cases through it: cards, bill pay, transfers, India's rails, buy now pay later. Select a case to see what happened.</p></div>
+  <div class="bigstat">
+    <div><b>17</b>cases tested across products and rails</div>
+    <div><b>0</b>new states needed</div>
+    <div><b>5</b>rules written down as decisions</div>
+    <div><b>1</b>thing found to be out of scope</div>
+  </div>
+  <div class="ptest">
+    <div>
+      <div class="legend" role="group" aria-label="Filter cases" id="legend"></div>
+      <div class="tiles" id="tiles"></div>
+    </div>
+    <aside class="detail" id="detail" aria-live="polite"></aside>
+  </div>
+
+  <div class="rails">
+    <h3 style="font-size:30px;margin-bottom:8px">A new rail is a few rows of mapping, not a rewrite.</h3>
+    <p class="prose muted" style="font-size:18px;margin-bottom:18px">Each rail's raw codes point at an existing state and cause. The words, colours, tracker and allowed actions follow automatically. If a code has no copy yet, a safe default renders on day one.</p>
+    <table>
+      <thead><tr><th>Rail</th><th>What the rail says</th><th></th><th>What the customer sees</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Card network</td><td><code>Authorised</code></td><td class="arrow">→</td><td><span class="chip c-info"><i></i>In progress</span></td><td>Card hold. Amount may change.</td></tr>
+        <tr><td>UPI</td><td><code>PENDING</code> (deemed)</td><td class="arrow">→</td><td><span class="chip c-info"><i></i>In progress</span></td><td>Other bank has it. Back by T+1 if not.</td></tr>
+        <tr><td>ACH</td><td><code>returned R01</code></td><td class="arrow">→</td><td><span class="chip c-warn"><i></i>Returned</span></td><td>Not enough money. Due date still applies.</td></tr>
+        <tr><td>UK Open Banking</td><td><code>RJCT</code></td><td class="arrow">→</td><td><span class="chip c-bad"><i></i>Declined</span></td><td>Receiving side refused. Nothing taken.</td></tr>
+        <tr><td>SWIFT, untracked</td><td><code>sent</code></td><td class="arrow">→</td><td><span class="chip c-info"><i></i>In progress</span></td><td>Tracker hidden. Honest end condition shown.</td></tr>
+        <tr><td>P2P network</td><td><code>pending, unenrolled</code></td><td class="arrow">→</td><td><span class="chip c-info"><i></i>In progress</span></td><td>Waiting for the recipient to accept.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 6 STRATEGY -->
+<section class="chapter wrap" id="strategy">
+  <p class="num">Chapter 6</p>
+  <h2>The strategy, in four choices.</h2>
+  <div class="prose"><p>Each choice is small. Together they turn status from a copy problem in every team into one shared system.</p></div>
+  <div class="choices">
+    <div class="choice"><h3>One model for every product</h3><p>Seven states, fixed labels, the same on cards, bill pay, transfers and every rail we add.</p><p class="why">Why: the benchmark found about 30 words for 7 situations. Consistency is the fix customers feel first.</p></div>
+    <div class="choice"><h3>Words are data, not code</h3><p>Every message is a content record with an ID. Screens, comms and the agent pull from it. Change it once, it changes everywhere.</p><p class="why">Why: it ends the push that says "done" while the app says "pending".</p></div>
+    <div class="choice"><h3>Rails map in, words stay put</h3><p>A new payment method adds mapping rows. It gets new copy only when a reviewed decision says it needs it.</p><p class="why">Why: new rails ship in days of mapping, not weeks of writing and review.</p></div>
+    <div class="choice"><h3>The agent says what the app says</h3><p>AI answers come from the same status and the same words, with a list of things it must never claim.</p><p class="why">Why: an agent that improvises status is a regulatory and trust risk.</p></div>
+  </div>
+</section>
+
+<!-- 7 PLAN -->
+<section class="chapter wrap" id="plan">
+  <p class="num">Chapter 7</p>
+  <h2>The action plan.</h2>
+  <div class="prose"><p>Four phases, each with a clear exit. We start where we own the most and where the risk is highest: card bill payments. Timings get set with engineering in phase one.</p></div>
+  <ol class="plan">
+    <li class="phase"><div class="pn">1<span>Agree</span></div><div><h3>Lock the foundation</h3><ul><li>Approve the seven states, labels and vocabulary.</li><li>Accept the five decision records from the pressure test.</li><li>Name owners for words, state logic and the event pipeline.</li><li>Compliance reviews the regulatory hooks: Reg Z, Reg E, RBI turnaround times.</li></ul></div><div class="done"><b>Done when</b>Every decision record has a named decider, and counsel has signed each regulatory hook.</div></li>
+    <li class="phase pilot"><div class="pn">2<span>Pilot</span></div><div><h3>Card bill payments, three surfaces</h3><ul><li>Build the status event and the content resolver.</li><li>Write the content records for bill pay, with safe defaults for all seven states.</li><li>Ship to the app, push notifications and the AI agent. The agent is the strictest test.</li><li>Measure today's status-related contacts as the baseline.</li></ul></div><div class="done"><b>Done when</b>Every bill-pay status renders from one record, with the same words on all three surfaces, and the baseline is in hand.</div></li>
+    <li class="phase"><div class="pn">3<span>Scale</span></div><div><h3>Every rail, every surface</h3><ul><li>Map card purchases, ACH, UPI, BBPS and wires.</li><li>Add email, SMS, statements, voice and the support console.</li><li>Retire screen-by-screen status copy as each journey moves over.</li></ul></div><div class="done"><b>Done when</b>Fewer than 1% of rail codes fall back to "unmapped", and fewer than 5% of messages use the generic default.</div></li>
+    <li class="phase"><div class="pn">4<span>Run</span></div><div><h3>Keep it simple as we grow</h3><ul><li>Fast path for routine changes, review gates for big ones.</li><li>Monthly reports on unmapped codes and the records driving most contacts.</li><li>Quarterly vocabulary review against complaint data.</li></ul></div><div class="done"><b>Done when</b>A new rail ships through mapping alone, with no new copy.</div></li>
+  </ol>
+</section>
+
+<!-- 8 ASKS -->
+<section class="chapter wrap" id="asks">
+  <p class="num">Chapter 8</p>
+  <h2>What we need from you.</h2>
+  <div class="asks">
+    <div>
+      <ul class="asklist" id="asklist">
+        <li><label><input type="checkbox"><span><b>Approve the standard</b>The seven-state model becomes the rule for every payment product.</span></label></li>
+        <li><label><input type="checkbox"><span><b>Name three owners</b>Content design owns the words. Product owns the state logic. Engineering owns the event and the rail registry.</span></label></li>
+        <li><label><input type="checkbox"><span><b>Fund the pilot</b>Card bill payments on the app, push and the AI agent.</span></label></li>
+        <li><label><input type="checkbox"><span><b>Assign a compliance reviewer</b>Every regulatory rule stays blocked until a named person signs it.</span></label></li>
+      </ul>
+      <div class="decide">
+        <h3>Three calls to make together</h3>
+        <ul>
+          <li>"Canceled" or "Cancelled", market by market.</li>
+          <li>Whether completed payments show a chip in lists. We propose not: no chip means done.</li>
+          <li>Who scopes the sibling system for loan and buy-now-pay-later due dates.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="measures">
+      <h3>How we'll know it works</h3>
+      <dl>
+        <dt>Fewer "where's my money?" contacts</dt><dd>Status-related contacts per 1,000 payments. Baseline set in the pilot, target agreed after.</dd>
+        <dt>One answer everywhere</dt><dd>Same label and same time promise for each event on every surface, checked automatically.</dd>
+        <dt>Rails fit without rewrites</dt><dd>Under 1% of rail codes unmapped. Under 5% of messages on the generic default.</dd>
+        <dt>No one is left waiting</dt><dd>Every payment past its "no later than" date goes to support automatically.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div class="cols">
+    <div><h3>The full system</h3><ul>
+      <li><a href="https://claude.ai/artifact/HCoBehdopTfE8PdNKpyyoQ" target="_blank" rel="noopener">Content design system spec</a></li>
+      <li><a href="https://claude.ai/artifact/67LhimW33VK9E19oxMrftk" target="_blank" rel="noopener">Design system: tokens and components</a></li>
+      <li><a href="https://claude.ai/artifact/RGj6jHcsRsM197wmReBa4w" target="_blank" rel="noopener">Research benchmark</a></li>
+      <li><a href="https://claude.ai/artifact/Rfvu9u9oSeECs8aTedmpLw" target="_blank" rel="noopener">Architecture whiteboard</a></li>
+    </ul></div>
+    <div><h3>Key sources</h3><ul>
+      <li><a href="https://docs.stripe.com/payments/payment-intents/verifying-status" target="_blank" rel="noopener">Stripe payment statuses</a> · <a href="https://docs.wise.com/guides/product/send-money/tracking/transfer-statuses" target="_blank" rel="noopener">Wise transfer statuses</a></li>
+      <li><a href="https://www.capitalone.com/help-center/credit-cards/understanding-payment-holds/" target="_blank" rel="noopener">Capital One payment holds</a> · <a href="https://monzo.com/help/payments-troubleshooting/pending-payment" target="_blank" rel="noopener">Monzo pending payments</a></li>
+      <li><a href="https://rbi.org.in/commonman/English/scripts/Notification.aspx?Id=3074" target="_blank" rel="noopener">RBI turnaround times</a> · <a href="https://www.consumerfinance.gov/rules-policy/regulations/1026/10/" target="_blank" rel="noopener">Reg Z §1026.10</a></li>
+      <li><a href="https://design-system.service.gov.uk/components/tag/" target="_blank" rel="noopener">GOV.UK status tags</a></li>
+    </ul></div>
+    <div><h3>About this story</h3><p>Built 18 Nov 2026 from the payment status research and system. Customer names, merchants and amounts are illustrative. Market labels and timings are from public sources checked in full.</p></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- Scrolly (port of The Pudding's Scrolly.svelte: the step most in view wins) ---------- */
+function scrolly(section, onStep){
+  const steps = [...section.querySelectorAll('.step')];
+  const ratios = steps.map(()=>0);
+  const threshold = Array.from({length:21},(_,i)=>i/20);
+  let current = -1;
+  steps.forEach((node,i)=>{
+    new IntersectionObserver(e=>{
+      ratios[i] = e[0].intersectionRatio;
+      let max=0, idx=-1;
+      ratios.forEach((r,j)=>{ if(r>max){max=r;idx=j;} });
+      if(idx!==-1 && idx!==current){
+        current=idx;
+        steps.forEach((s,j)=>s.classList.toggle('active',j===idx));
+        onStep(idx);
+      }
+    },{threshold, rootMargin:'-20% 0px -20% 0px'}).observe(node);
+  });
+}
+
+/* ---------- Hero flip ---------- */
+const WORDS = ['Pending','Processing','In process','Submitted','Posted','Success','Approved','Settled','Under review','On hold'];
+const flip = document.getElementById('flip');
+if(!RM){
+  let wi=0;
+  setInterval(()=>{
+    flip.classList.add('out');
+    setTimeout(()=>{ wi=(wi+1)%WORDS.length; flip.querySelector('span').textContent=WORDS[wi]; flip.classList.remove('out'); },250);
+  },1700);
+}
+
+/* ---------- Chapter 1 ---------- */
+const phone = document.getElementById('phone'), stP = document.getElementById('st-problem');
+const HL = [[],['coffee','rent','refund'],['card'],[]];
+scrolly(document.querySelector('[data-scrolly="problem"]'), i=>{
+  phone.classList.toggle('dim', HL[i].length>0);
+  phone.querySelectorAll('.row').forEach(r=>r.classList.toggle('hl', HL[i].includes(r.dataset.k)));
+  stP.classList.toggle('ask', i===3);
+});
+
+/* ---------- Chapter 2: Stripe map, then word storm ---------- */
+const svg = document.getElementById('mapsvg');
+const NS='http://www.w3.org/2000/svg';
+const el=(t,a,txt)=>{const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);if(txt!=null)n.textContent=txt;return n;};
+const api=['requires_payment_method','requires_confirmation','requires_action','processing','requires_capture','succeeded','canceled'];
+const labels=[['Incomplete',[0,1,2]],['Pending',[3]],['Uncaptured',[4]],['Succeeded',[5]],['Canceled',[6]]];
+function drawStripe(){
+  svg.innerHTML='';
+  svg.appendChild(el('text',{x:20,y:40,'font-size':15,'font-weight':600,fill:'var(--ink-2)'},'Inside: 7 system states'));
+  svg.appendChild(el('text',{x:620,y:40,'font-size':15,'font-weight':600,fill:'var(--ink-2)','text-anchor':'end'},'Outside: 5 labels'));
+  const ay=i=>90+i*58, ly=i=>110+i*78;
+  labels.forEach(([lab,src],li)=>src.forEach(s=>{
+    const p=el('path',{d:`M262 ${ay(s)} C 380 ${ay(s)}, 400 ${ly(li)}, 470 ${ly(li)}`,fill:'none',stroke:li===0?'var(--s-warn)':'var(--rule)','stroke-width':li===0?2.5:2});
+    svg.appendChild(p);
+  }));
+  api.forEach((a,i)=>{
+    svg.appendChild(el('rect',{x:20,y:ay(i)-17,width:242,height:34,rx:8,fill:'var(--card)',stroke:'var(--rule)'}));
+    svg.appendChild(el('text',{x:34,y:ay(i)+5,'font-size':14,fill:'var(--ink)','font-family':'ui-monospace,Menlo,monospace'},a));
+  });
+  labels.forEach(([lab],li)=>{
+    svg.appendChild(el('rect',{x:470,y:ly(li)-20,width:150,height:40,rx:20,fill:li===0?'var(--s-warn-bg)':'var(--card)',stroke:li===0?'var(--s-warn)':'var(--ink)','stroke-width':1.5}));
+    svg.appendChild(el('text',{x:545,y:ly(li)+6,'font-size':17,'font-weight':650,'text-anchor':'middle',fill:li===0?'var(--s-warn)':'var(--ink)'},lab));
+  });
+  svg.appendChild(el('text',{x:20,y:505,'font-size':14,fill:'var(--ink-2)'},'Three different states read "Incomplete". Source: Stripe docs.'));
+}
+function drawCounts(){
+  svg.innerHTML='';
+  const rows=[['Adyen',60,'about 60 states inside'],['Wise',10,'10 states inside → 8 labels'],['Stripe',7,'7 states inside → 5 labels']];
+  rows.forEach(([n,c,t],i)=>{
+    const y=90+i*150;
+    svg.appendChild(el('text',{x:20,y,'font-size':26,'font-weight':750,fill:'var(--ink)'},n));
+    svg.appendChild(el('text',{x:20,y:y+24,'font-size':15,fill:'var(--ink-2)'},t));
+    for(let k=0;k<c;k++){
+      const col=k%20,row=Math.floor(k/20);
+      svg.appendChild(el('circle',{cx:30+col*29,cy:y+52+row*22,r:8,fill:'var(--ink)','fill-opacity':.85}));
+    }
+  });
+}
+drawStripe();
+
+/* word storm */
+const STORM = {
+ SCHEDULED:['Scheduled','Upcoming','Autopay on'],
+ ACTION_NEEDED:['Incomplete'],
+ IN_PROGRESS:['Pending','Processing','In process','Submitted','Payment processing','Waiting for recipient','Unclaimed','Under review','Held','On hold','Sent'],
+ COMPLETED:['Posted','Received','Payment Received','Completed','Complete','Success','Approved','Settled','Transfer Sent'],
+ AVAILABLE:['Funds available','Credit available'],
+ NOT_COMPLETED:['Failed','Declined','Denied','Rejected','Canceled','Reverted','Expired'],
+ CHANGED_AFTER_DONE:['Returned','Bounced back','Refunded','Disputed','Charged back']
+};
+const COLS=[['SCHEDULED','Scheduled','c-neutral'],['ACTION_NEEDED','Action needed','c-warn'],['IN_PROGRESS','In progress','c-info'],['COMPLETED','Completed','c-ok'],['AVAILABLE','Available','c-ok'],['NOT_COMPLETED','Not completed','c-bad'],['CHANGED_AFTER_DONE','Changed after done','c-warn']];
+const storm=document.getElementById('storm');
+const words=[];
+COLS.forEach(([k,lab,cls],ci)=>{
+  const h=document.createElement('div'); h.className='head'; h.innerHTML=`<span class="chip ${cls}" style="font-size:13px;padding:3px 9px"><i></i>${lab}</span>`; h.dataset.ci=ci; storm.appendChild(h);
+  STORM[k].forEach((w,wi)=>{
+    const d=document.createElement('div'); d.className='w'; d.innerHTML=`<span class="chip c-grey"><i></i>${w}</span>`;
+    d.dataset.ci=ci; d.dataset.wi=wi; d.dataset.cls=cls; storm.appendChild(d); words.push(d);
+  });
+});
+const empty=document.createElement('div'); empty.className='empty'; empty.textContent='Almost no one has a word for this.'; storm.appendChild(empty);
+// seeded scatter
+let seed=7; const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const scatter=words.map(()=>[rnd(),rnd()]);
+let stormMode='hidden';
+function layoutStorm(){
+  const W=storm.clientWidth,H=storm.clientHeight; if(!W) return;
+  const left=Math.min(176,W*0.34), gap=6, lineH=W<560?25:30;
+  // flow words into one band per state
+  let y=Math.max(10,(H-14*lineH)/2), pos=[];
+  const heads=storm.querySelectorAll('.head');
+  COLS.forEach((c,ci)=>{
+    heads[ci].style.width=(left-12)+'px'; heads[ci].style.textAlign='left';
+    heads[ci].style.transform=`translate(0px,${y}px)`;
+    let x=left, rowY=y;
+    words.filter(d=>+d.dataset.ci===ci).forEach(d=>{
+      const w=d.offsetWidth;
+      if(x+w>W && x>left){ x=left; rowY+=lineH; }
+      pos[words.indexOf(d)]=[x,rowY]; x+=w+gap;
+    });
+    if(ci===1){ empty.style.transform=`translate(${x+8}px,${rowY+2}px)`; empty.style.width=Math.max(120,W-x-12)+'px'; empty.style.textAlign='left'; }
+    y=rowY+lineH+8;
+  });
+  words.forEach((d,i)=>{
+    const w=d.offsetWidth,h=d.offsetHeight;
+    if(stormMode==='cols'){
+      d.style.transform=`translate(${pos[i][0]}px,${pos[i][1]}px)`;
+      d.firstChild.className='chip '+d.dataset.cls;
+    } else {
+      d.style.transform=`translate(${scatter[i][0]*(W-w)}px,${30+scatter[i][1]*(H-60-h)}px)`;
+      d.firstChild.className='chip c-grey';
+    }
+    d.style.opacity=stormMode==='hidden'?0:1;
+  });
+  storm.classList.toggle('cols',stormMode==='cols');
+}
+window.addEventListener('resize',layoutStorm);
+scrolly(document.querySelector('[data-scrolly="insight"]'), i=>{
+  if(i===0){ drawStripe(); svg.style.opacity=1; stormMode='hidden'; }
+  else if(i===1){ drawCounts(); svg.style.opacity=1; stormMode='hidden'; }
+  else { svg.style.opacity=0; stormMode = i===2?'scatter':'cols'; }
+  storm.classList.toggle('final', i===4);
+  layoutStorm();
+});
+svg.style.transition='opacity .4s';
+setTimeout(layoutStorm,300);
+
+/* ---------- Chapter 3: player ---------- */
+const STATE_META={
+  SCHEDULED:{cls:'c-neutral',col:'var(--s-neutral)'}, ACTION_NEEDED:{cls:'c-warn',col:'var(--s-warn)'},
+  IN_PROGRESS:{cls:'c-info',col:'var(--s-info)'}, COMPLETED:{cls:'c-ok',col:'var(--s-ok)'}, AVAILABLE:{cls:'c-ok',col:'var(--s-ok)'},
+  NOT_COMPLETED:{cls:'c-bad',col:'var(--s-bad)'}, CHANGED_AFTER_DONE:{cls:'c-warn',col:'var(--s-warn)'}
+};
+const SC={
+ bill:{title:'Card bill payment', steps:['Scheduled','Sent','Received by your card'], seq:[
+  {s:'SCHEDULED',label:'Scheduled',cur:0,h:'$250.00 to your card on 24 Nov',b:'We’ll take the money from Checking ••4417 on 24 Nov.',n:'Nothing to do. You can edit or cancel until 23 Nov.',cta:'Edit payment',raw:'Our scheduler: <code>scheduled</code>',why:'Future date, no money moved.'},
+  {s:'COMPLETED',label:'Completed',cur:3,h:'Your card received your payment',b:'We credited $250.00 on 24 Nov. It can take a few business days to leave your bank account.',n:'Nothing to do.',raw:'Card ledger: <code>credited</code> · ACH: <code>pending</code>',why:'Decision CDR-0001: done when the card is credited. The bank transfer settles quietly in the timeline.'},
+  {s:'CHANGED_AFTER_DONE',label:'Returned',cur:3,marker:'stopped',h:'Your bank sent your payment back',b:'Your $250.00 is back in your account. Your card balance is still due on 28 Nov.',n:'Pay again from another account.',cta:'Pay again',raw:'ACH: <code>returned R01</code>',why:'Something changed after it completed. Cause: not enough money. The due date is restated.'}
+ ]},
+ upi:{title:'UPI transfer', steps:['Sent','With HDFC Bank','Received'], seq:[
+  {s:'IN_PROGRESS',label:'In progress',cur:1,eta:'Expected in a few minutes',h:'HDFC Bank has your payment',b:'Your ₹2,000 to Asha R is on its way.',n:'Nothing to do. We’ll tell you when it arrives.',raw:'UPI: <code>PENDING</code>',why:'Money left; the receiving bank has it.'},
+  {s:'IN_PROGRESS',label:'In progress',delayed:true,cur:1,eta:'No later than 19 Nov',h:'HDFC Bank has your payment',b:'This is taking longer than usual. If it doesn’t arrive by 19 Nov, the money comes back to your account automatically.',n:'Nothing to do. Don’t pay again.',raw:'UPI: <code>DEEMED</code> · reason <code>BT</code>',why:'Same state, now delayed. The deadline comes from RBI turnaround times.'},
+  {s:'COMPLETED',label:'Completed',cur:3,h:'Asha R received ₹2,000',b:'Completed on 18 Nov.',n:'Nothing to do.',raw:'UPI: <code>SUCCESS</code>',why:'The milestone goes in the headline. The label stays "Completed".'}
+ ]},
+ low:{title:'Scheduled bill', steps:['Scheduled','Sent','Received by City Power'], seq:[
+  {s:'SCHEDULED',label:'Scheduled',cur:0,h:'$84.20 to City Power on 24 Nov',b:'We’ll take the money from Checking ••4417 on 24 Nov.',n:'Nothing to do. You can edit or cancel until 23 Nov.',cta:'Edit payment',raw:'Our scheduler: <code>scheduled</code>',why:'Future date, no money moved.'},
+  {s:'ACTION_NEEDED',label:'Action needed',cur:0,marker:'action',h:'Add money to pay City Power on 24 Nov',b:'This payment needs $84.20. If you don’t add money, it won’t go on 24 Nov.',n:'Add money before 24 Nov.',cta:'Add money',raw:'Balance check: <code>insufficient</code>',why:'The state no one has a word for. Action comes first, with the deadline.'},
+  {s:'IN_PROGRESS',label:'In progress',cur:1,eta:'Expected by 25 Nov',h:'Your payment is on its way to City Power',b:'Expected by 25 Nov.',n:'Nothing to do.',raw:'Bill pay: <code>sent</code>',why:'Back on track the moment she acts.'},
+  {s:'COMPLETED',label:'Completed',cur:3,h:'City Power received your payment',b:'Completed on 25 Nov.',n:'Nothing to do.',raw:'Bill pay: <code>delivered</code>',why:'Done.'}
+ ]},
+ tip:{title:'Card purchase', steps:['Held','Paid'], seq:[
+  {s:'IN_PROGRESS',label:'In progress',cur:0,h:'Corner Café is holding $4.20',b:'The final amount may change, for example if you added a tip.',n:'Nothing to do.',raw:'Card network: <code>Authorised</code>',why:'A hold, not a charge. Cause: hold.'},
+  {s:'COMPLETED',label:'Completed',cur:2,h:'Paid to Corner Café',b:'Final amount $5.00, including your tip.',n:'Nothing to do.',raw:'Card network: <code>Captured</code>',why:'The final amount differs from the hold, so we say so.'}
+ ]}
+};
+const life=document.getElementById('life');
+const NODES={ACTION_NEEDED:[290,62],SCHEDULED:[100,170],IN_PROGRESS:[290,170],COMPLETED:[480,170],AVAILABLE:[660,170],NOT_COMPLETED:[290,282],CHANGED_AFTER_DONE:[660,282]};
+const NLAB={ACTION_NEEDED:'Action needed',SCHEDULED:'Scheduled',IN_PROGRESS:'In progress',COMPLETED:'Completed',AVAILABLE:'Available',NOT_COMPLETED:'Not completed',CHANGED_AFTER_DONE:'Changed after done'};
+const EDGES=[['SCHEDULED','IN_PROGRESS'],['IN_PROGRESS','COMPLETED'],['COMPLETED','AVAILABLE'],['IN_PROGRESS','NOT_COMPLETED'],['COMPLETED','CHANGED_AFTER_DONE']];
+function drawLife(){
+  life.innerHTML='';
+  const defs=el('defs',{}); const mk=el('marker',{id:'ar',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'}); mk.appendChild(el('path',{d:'M0 0L10 5L0 10z',fill:'var(--ink-2)'})); defs.appendChild(mk); life.appendChild(defs);
+  const W=150,H=50, g=el('g',{fill:'none',stroke:'var(--ink-2)','stroke-width':1.5});
+  const P=[`M${100+75} 170H${290-75}`,`M${290+75} 170H${480-75}`,`M${480+75} 170H${660-75}`,
+    `M100 ${170-25}V62H${290-75}`,`M${278} ${62+25}V${170-25}`,`M${302} ${170-25}V${62+25}`,
+    `M290 ${170+25}V${282-25}`,`M100 ${170+25}V282H${290-75}`,`M${290+75} 282H460V${170+25}`,`M500 ${170+25}V282H${660-75}`];
+  P.forEach(d=>g.appendChild(el('path',{d,'marker-end':'url(#ar)'})));
+  life.appendChild(g);
+  for(const k in NODES){
+    const [x,y]=NODES[k], m=STATE_META[k];
+    const n=el('g',{class:'node','data-k':k});
+    n.appendChild(el('rect',{x:x-W/2,y:y-H/2,width:W,height:H,rx:25,fill:m.col,'fill-opacity':.08,stroke:m.col,'stroke-width':1.5}));
+    n.appendChild(el('text',{x,y:y+5,'text-anchor':'middle','font-size':15,'font-weight':650,fill:'var(--ink)'},NLAB[k]));
+    life.appendChild(n);
+  }
+}
+drawLife();
+let scen='bill', si=0;
+const app=document.getElementById('app'), behind=document.getElementById('behind'), dots=document.getElementById('dots');
+function renderPlayer(){
+  const S=SC[scen], st=S.seq[si], m=STATE_META[st.s];
+  const cls = st.delayed?'c-warn':m.cls;
+  life.querySelectorAll('.node').forEach(n=>{const on=n.dataset.k===st.s; n.querySelector('rect').setAttribute('fill-opacity',on?.28:.06); n.querySelector('rect').setAttribute('stroke-width',on?3.5:1.5);});
+  const trk=S.steps.map((t,i)=>{ let c=i<st.cur?'done':i===st.cur?'now':''; if(i===st.cur&&st.marker)c+=' '+st.marker; if(st.cur>=S.steps.length)c='done';
+    return `<li class="${c}"><span class="d"></span>${t}${i===st.cur&&st.eta?`<span class="eta">${st.eta}</span>`:''}</li>`;}).join('');
+  app.innerHTML=`<div class="top"><span>${S.title}</span><span>Payment details</span></div>
+    <span class="chip ${cls}"><i></i>${st.label}</span>
+    <h3>${st.h}</h3><p class="body">${st.b}</p><p class="next">${st.n}</p>
+    ${st.cta?`<span class="cta">${st.cta}</span>`:''}
+    <ol class="trk" style="margin-top:26px">${trk}</ol>`;
+  behind.innerHTML=`<b>Behind the scenes.</b> ${st.raw} → <b>${st.s}</b>${st.delayed?' (delayed)':''}. ${st.why}`;
+  dots.innerHTML=S.seq.map((_,i)=>`<i class="${i===si?'on':''}"></i>`).join('');
+  document.getElementById('prev').disabled=si===0;
+  document.getElementById('next').disabled=si===S.seq.length-1;
+}
+document.querySelectorAll('.scen button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.scen button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  scen=b.dataset.s; si=0; renderPlayer();
+}));
+document.getElementById('next').addEventListener('click',()=>{si=Math.min(si+1,SC[scen].seq.length-1);renderPlayer();});
+document.getElementById('prev').addEventListener('click',()=>{si=Math.max(si-1,0);renderPlayer();});
+renderPlayer();
+
+/* ---------- Chapter 4 ---------- */
+const stS=document.getElementById('st-surfaces');
+scrolly(document.querySelector('[data-scrolly="surfaces"]'), i=>{
+  stS.classList.add('focus');
+  stS.querySelectorAll('.sf').forEach(s=>s.classList.toggle('hl', +s.dataset.sf===i || (i===4 && +s.dataset.sf===4)));
+});
+
+/* ---------- Chapter 5: pressure test ---------- */
+const CAT={yes:['Fits as is','var(--s-ok)'],change:['Fits with a small change','var(--s-info)'],rule:['Fits with a written rule','var(--s-neutral)'],fix:['Fixed a flaw','var(--s-warn)'],out:['Out of scope','var(--s-bad)']};
+const CASES=[
+ [1,'Card bill pay, from another bank','rule','Scheduled → Completed → (Returned)','When is it done? The card is credited the day we receive it, but the bank transfer can come back days later.','Completed when the card is credited. Settlement shows only in the timeline. (CDR-0001)'],
+ [2,'Card autopay','yes','Each payment: Scheduled → Completed','Autopay is a standing instruction, not a payment.','Autopay shows On or Off. Each payment gets its own status. (CDR-0002)'],
+ [3,'Returned bill payment','change','Completed → Returned','Customers need to know about fees and that the due date still stands.','Added a fee detail. The message must restate the due date.'],
+ [4,'Card purchase hold','yes','In progress (hold) → Completed','None.','None.'],
+ [5,'Hold amount changes (tip, fuel, hotel)','change','In progress (hold) → Completed','The final amount differs from the hold.','Added a final-amount detail, shown in the timeline.'],
+ [6,'Hold released, never charged','change','In progress (hold) → Canceled','No reason existed for a released hold.','Added the cause "hold released". Neutral colour.'],
+ [7,'Merchant refund, full or partial','rule','Completed → Refunded, with a linked refund','Two records, and partial refunds.','The refund is its own linked payment. The original shows Refunded once it completes. (CDR-0003)'],
+ [8,'Card dispute','fix','Completed → Disputed → Refunded or Completed','The first draft hid that the payment had completed.','Open disputes stay in "changed after done", with deadlines from Reg Z and Reg E. (CDR-0004)'],
+ [9,'P2P to someone not yet enrolled','change','In progress → Completed or Expired','The payment waits on the recipient, not a bank.','Added the cause "waiting on recipient", with the network’s claim window as the deadline.'],
+ [10,'ACH transfer','yes','In progress → Completed → (Returned)','None.','None.'],
+ [11,'International wire, no tracking','change','In progress (no tracker) → Completed','Intermediary banks can take fees, so less may arrive.','Added an amount-received detail. The tracker hides and an honest end condition shows.'],
+ [12,'Fast rails: RTP, FedNow, UPI','rule','In progress (seconds) → Completed','A flash of "In progress" looks like a problem.','If the rail confirms while the screen is open, show Completed directly. (CDR-0005)'],
+ [13,'Request for payment','yes','Payer: Action needed → Completed or Expired','Fits once case 9 added "waiting on recipient".','Same payment, seen from both sides.'],
+ [14,'UPI deemed or pending','yes','In progress → Completed, or money returned','The sender sees money gone; the receiver may have it.','Split view: sent by us, not yet received. The message cites the auto-reversal date.'],
+ [15,'UPI failed but debited','yes','Failed, money taken → money back','None.','The message states the reversal date and the compensation rule.'],
+ [16,'BBPS bill payment','change','In progress → Completed','The biller isn’t a bank.','Renamed the cause to "waiting on other party", which covers banks, billers and networks.'],
+ [17,'Buy now, pay later instalments','out','Each instalment: Scheduled → Completed','"Due" and "overdue" describe a debt, not a payment.','Out of scope. Needs a small sibling system for obligations.']
+];
+const tiles=document.getElementById('tiles'), detail=document.getElementById('detail'), legend=document.getElementById('legend');
+let filter=null, sel=1;
+function renderTiles(){
+  tiles.innerHTML=CASES.map(c=>`<button type="button" class="tile${filter&&filter!==c[2]?' off':''}" style="border-left-color:${CAT[c[2]][1]}" data-n="${c[0]}" aria-pressed="${c[0]===sel}">${c[1]}<small>Case ${c[0]} · ${CAT[c[2]][0]}</small></button>`).join('');
+  tiles.querySelectorAll('.tile').forEach(t=>t.addEventListener('click',()=>{sel=+t.dataset.n;renderTiles();renderDetail();}));
+}
+function renderDetail(){
+  const c=CASES.find(x=>x[0]===sel);
+  detail.innerHTML=`<span class="chip" style="color:${CAT[c[2]][1]};background:var(--card)"><i></i>${CAT[c[2]][0]}</span><h3>${c[1]}</h3><dl><dt>Path through the states</dt><dd>${c[3]}</dd><dt>What we found</dt><dd>${c[4]}</dd><dt>What we decided</dt><dd>${c[5]}</dd></dl>`;
+}
+legend.innerHTML=Object.entries(CAT).map(([k,[t,col]])=>`<button type="button" data-k="${k}" aria-pressed="false"><i style="background:${col}"></i>${t} (${CASES.filter(c=>c[2]===k).length})</button>`).join('');
+legend.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  filter = filter===b.dataset.k?null:b.dataset.k;
+  legend.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.k===filter));
+  renderTiles();
+}));
+renderTiles(); renderDetail();
+
+/* ---------- Asks ---------- */
+document.querySelectorAll('#asklist input').forEach(inp=>inp.addEventListener('change',()=>inp.closest('li').classList.toggle('checked',inp.checked)));
+
+/* ---------- progress + chapter nav ---------- */
+const bar=document.getElementById('bar');
+const links=[...document.querySelectorAll('#chapnav a')];
+const chaps=links.map(a=>document.querySelector(a.getAttribute('href')));
+function onScroll(){
+  const h=document.documentElement; bar.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+  let on=-1; chaps.forEach((c,i)=>{ if(c.getBoundingClientRect().top<window.innerHeight*0.4) on=i; });
+  links.forEach((a,i)=>a.classList.toggle('on',i===on));
+}
+document.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+})();
+</script>
+</body>
+</html>
