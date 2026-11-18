@@ -252,13 +252,10 @@ p{margin:0}
 .tabs a{padding:6px 14px;border-radius:999px;text-decoration:none;color:var(--ink-2);font:600 14px/1 var(--display)}
 .tabs a[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(23,32,51,.15)}
 body.research-mode #chapnav{display:none}
-.research{padding:76px 24px 48px}
-.research-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:20px}
-.research-head h2{font-size:clamp(32px,4.5vw,52px);font-variation-settings:"wdth" 85;margin-bottom:10px}
-.research-head p{font-size:18px;max-width:60ch}
-.research-actions{display:flex;gap:10px;flex-wrap:wrap}
-.pdf{display:block;width:100%;height:calc(100vh - 220px);min-height:520px;border:1px solid var(--rule);border-radius:14px;background:var(--card)}
-.pdf-note{font:400 14px/1.4 var(--display);margin-top:10px}
+.sysbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-top:54px;padding-bottom:8px;font:400 16px/1.4 var(--display)}
+.sysbar .btn{padding:9px 16px;font-size:14px}
+.sysframe{display:block;width:100%;height:calc(100vh - 118px);border:0;border-top:1px solid var(--rule);background:var(--card)}
+body.research-mode footer{display:none}
 @media (max-width:760px){.topbar>b{display:none}}
 footer{margin-top:120px;padding:48px 0 80px;border-top:2px solid var(--ink);font:400 15px/1.55 var(--display);color:var(--ink-2)}
 footer h3{font-size:20px;color:var(--ink);margin-bottom:12px}
@@ -272,7 +269,7 @@ footer ul{margin:0;padding-left:18px}
   <b>Where's my money?</b>
   <div class="tabs" role="tablist" aria-label="Views">
     <a href="#story" role="tab" id="tab-story" aria-controls="view-story">Story</a>
-    <a href="#research" role="tab" id="tab-research" aria-controls="view-research">Research</a>
+    <a href="#system" role="tab" id="tab-research" aria-controls="view-research">Full system</a>
   </div>
   <nav id="chapnav">
     <a href="#problem">Problem</a>
@@ -501,7 +498,7 @@ footer ul{margin:0;padding-left:18px}
     <div><h3>The full system</h3><ul>
       <li><a href="https://claude.ai/artifact/HCoBehdopTfE8PdNKpyyoQ" target="_blank" rel="noopener">Content design system spec</a></li>
       <li><a href="https://claude.ai/artifact/67LhimW33VK9E19oxMrftk" target="_blank" rel="noopener">Design system: tokens and components</a></li>
-      <li><a href="#research">Research benchmark (PDF, on this site)</a></li>
+      <li><a href="#system">Full system reference (on this site)</a></li>
       <li><a href="https://claude.ai/artifact/Rfvu9u9oSeECs8aTedmpLw" target="_blank" rel="noopener">Architecture whiteboard</a></li>
     </ul></div>
     <div><h3>Key sources</h3><ul>
@@ -516,20 +513,11 @@ footer ul{margin:0;padding-left:18px}
 </div>
 
 <section id="view-research" role="tabpanel" aria-labelledby="tab-research" hidden>
-  <div class="wrap research">
-    <div class="research-head">
-      <div>
-        <h2>Payment Status Benchmark</h2>
-        <p class="muted">The research behind the story: how 24 banks, fintechs, payment rails and standards structure and word payment status. 14 pages, 18 Nov 2026.</p>
-      </div>
-      <div class="research-actions">
-        <a class="btn solid" href="research/payment-status-benchmark.pdf" download>Download PDF</a>
-        <a class="btn" href="research/payment-status-benchmark.pdf" target="_blank" rel="noopener">Open in a new tab</a>
-      </div>
-    </div>
-    <iframe class="pdf" src="research/payment-status-benchmark.pdf#view=FitH" title="Payment Status Benchmark: Banks, Fintech, and Infra (PDF)"></iframe>
-    <p class="muted pdf-note">If the document doesn't show here, your browser may not display PDFs inside a page. Use Open in a new tab.</p>
+  <div class="sysbar wrap">
+    <p><b>The full system.</b> <span class="muted">Spec, design system, research and the system file, in one place.</span></p>
+    <a class="btn" href="system/" target="_blank" rel="noopener">Open full screen</a>
   </div>
+  <iframe class="sysframe" src="system/" title="Payment Status System: spec, design system, research and data" loading="lazy"></iframe>
 </section>
 
 <script>
@@ -818,11 +806,11 @@ function onScroll(){
   links.forEach((a,i)=>a.classList.toggle('on',i===on));
 }
 document.addEventListener('scroll',onScroll,{passive:true}); onScroll();
-/* ---------- tabs: #research shows the PDF, anything else shows the story ---------- */
+/* ---------- tabs: #system shows the full reference, anything else shows the story ---------- */
 const vStory=document.getElementById('view-story'), vRes=document.getElementById('view-research');
 const tS=document.getElementById('tab-story'), tR=document.getElementById('tab-research');
 function route(){
-  const res = location.hash==='#research';
+  const res = location.hash==='#system' || location.hash==='#research';
   vStory.hidden=res; vRes.hidden=!res;
   tS.setAttribute('aria-selected',!res); tR.setAttribute('aria-selected',res);
   document.body.classList.toggle('research-mode',res);
